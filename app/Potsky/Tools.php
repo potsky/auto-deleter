@@ -86,6 +86,14 @@ class Tools
 	/**
 	 * @return string
 	 */
+	public static function getSlackWebhook()
+	{
+		return getenv( 'SLACK_WEBHOOK' );
+	}
+
+	/**
+	 * @return string
+	 */
 	private static function getFilesBackupDirectoryModel()
 	{
 		return getenv( 'FILES_BACKUP_DIRECTORY_NAME' );
@@ -104,6 +112,23 @@ class Tools
 		}
 
 		return $blacklist;
+	}
+
+	/**
+	 * @param $message
+	 */
+	public static function sendSlackMessage( $message )
+	{
+		$webhook = self::getSlackWebhook();
+
+		if ( ! empty( $webhook ) )
+		{
+			$client = new \Maknz\Slack\Client( $webhook );
+
+			if ( is_array( $message ) ) $message = implode( "\n" , $message );
+
+			$client->send( $message );
+		}
 	}
 
 	/**

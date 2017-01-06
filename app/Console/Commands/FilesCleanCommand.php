@@ -7,6 +7,8 @@ use Symfony\Component\Console\Input\InputOption;
 class FilesCleanCommand extends Command
 {
 
+	private $messages = array();
+
 	/**
 	 * The console command name.
 	 *
@@ -29,11 +31,14 @@ class FilesCleanCommand extends Command
 	 */
 	public function fire()
 	{
-		$this->info( 'Starts at ' . date( 'Y/m/d H:i:s' ) );
+		Tools::sendSlackMessage( 'Auto deleter starts' );
 
 		$dry_run    = $this->option( 'dry-run' );
 		$prune_only = $this->option( 'prune-only' );
 		$users      = Tools::getFilesUsers();
+
+		$this->info( 'Starts at ' . date( 'Y/m/d H:i:s' ) );
+
 
 		if ( $dry_run === true )
 		{
@@ -47,30 +52,39 @@ class FilesCleanCommand extends Command
 
 		foreach ( $users as $user )
 		{
-			$this->line( 'User <info>' . $user . '</info>' );
-
+			$this->bag( '- User <info>' . $user . '</info>' );
 
 			// Backup data
 			if ( $prune_only === false )
 			{
 				$directory = Tools::ensureBackupDirectory( $user , $dry_run );
-				$this->line( '  Backup in directory <info>' . $directory . '</info>' );
+				$this->bag( '  Backup in directory <info>' . $directory . '</info>' );
 
 				$count     = Tools::backupFiles( $user , $directory , $dry_run );
 				$counts    = ( $count > 1 ) ? 's' : '';
 				$size      = Tools::dirSize( Tools::getFilesUserBackupDirectory( $user , $directory ) );
 				$humanSize = ( $size < 1000 ) ? '0B' : Tools::humanFilesize( $size );
-				$this->line( '  <info>' . $count . '</info> file' . $counts . ' moved from user root directory (<info>' . $humanSize . '</info>)' );
+				$this->bag( '  <info>' . $count . '</info> file' . $counts . ' moved from user root directory (<info>' . $humanSize . '</info>)' );
 			}
 
 			// Prune old backup
 			$count  = Tools::removeBackupFiles( $user , Tools::getFilesRetentionDays() , $dry_run );
 			$counts = ( $count > 1 ) ? 's' : '';
-			$this->line( '  <info>' . $count . '</info> backup folder' . $counts . ' removed' );
+			$this->bag( '  <info>' . $count . '</info> backup folder' . $counts . ' removed' );
 		}
 
 		$this->info( 'Finished at ' . date( 'Y/m/d H:i:s' ) );
 
+		Tools::sendSlackMessage( $this->messages );
+	}
+
+	/**
+	 * @param string $message
+	 */
+	private function bag( $message )
+	{
+		$this->line( $message );
+		$this->messages[] = str_replace( array( '<info>' , '</info>' ) , '*' , $message );
 	}
 
 	/**
