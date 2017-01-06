@@ -40,6 +40,7 @@ class ComposerStaticInitfee01526a50ab997d50aa442e1955e1e
         'P' => 
         array (
             'Psr\\Log\\' => 8,
+            'Potsky\\' => 7,
         ),
         'M' => 
         array (
@@ -149,6 +150,10 @@ class ComposerStaticInitfee01526a50ab997d50aa442e1955e1e
         'Psr\\Log\\' => 
         array (
             0 => __DIR__ . '/..' . '/psr/log/Psr/Log',
+        ),
+        'Potsky\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/app/Potsky',
         ),
         'Monolog\\' => 
         array (

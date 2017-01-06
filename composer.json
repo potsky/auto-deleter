@@ -16,7 +16,8 @@
     },
     "autoload": {
         "psr-4": {
-            "App\\": "app/"
+            "App\\": "app/",
+            "Potsky\\" : "app/Potsky/"
         }
     },
     "autoload-dev": {
