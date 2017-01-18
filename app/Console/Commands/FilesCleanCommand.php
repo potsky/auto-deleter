@@ -33,67 +33,76 @@ class FilesCleanCommand extends Command
 	{
 		Tools::sendSlackMessage( 'Auto deleter starts' );
 
-		$dry_run    = $this->option( 'dry-run' );
-		$prune_only = $this->option( 'prune-only' );
-		$users      = Tools::getFilesUsers();
-
-		$this->info( 'Starts at ' . date( 'Y/m/d H:i:s' ) );
-
-
-		if ( $dry_run === true )
+		try
 		{
-			$this->warn( 'Running in dry mode' );
-		}
 
-		if ( $prune_only === true )
-		{
-			$this->warn( 'Running in prune only mode' );
-		}
+			$dry_run    = $this->option( 'dry-run' );
+			$prune_only = $this->option( 'prune-only' );
+			$users      = Tools::getFilesUsers();
 
-		$do = true;
+			$this->info( 'Starts at ' . date( 'Y/m/d H:i:s' ) );
 
-		if ( $this->option( 'force' ) !== true )
-		{
-			$this->line( '' );
-			$do = ( $this->ask( 'Do you want to continue? [yes|no]' ) === 'yes' );
-			$this->line( '' );
-		}
 
-		if ( $do === true )
-		{
-			if ( empty( $users ) )
+			if ( $dry_run === true )
 			{
-				$this->bag( '<error>No user</error>' );
+				$this->warn( 'Running in dry mode' );
 			}
-			else
+
+			if ( $prune_only === true )
 			{
-				foreach ( $users as $user )
+				$this->warn( 'Running in prune only mode' );
+			}
+
+			$do = true;
+
+			if ( $this->option( 'force' ) !== true )
+			{
+				$this->line( '' );
+				$do = ( $this->ask( 'Do you want to continue? [yes|no]' ) === 'yes' );
+				$this->line( '' );
+			}
+
+			if ( $do === true )
+			{
+				if ( empty( $users ) )
 				{
-					$this->bag( '- User <info>' . $user . '</info>' );
-
-					// Backup data
-					if ( $prune_only === false )
+					$this->bag( '<error>No user</error>' );
+				}
+				else
+				{
+					foreach ( $users as $user )
 					{
-						$directory = Tools::ensureBackupDirectory( $user , $dry_run );
-						$this->bag( '  Backup in directory <info>' . $directory . '</info>' );
+						$this->bag( '- User <info>' . $user . '</info>' );
 
-						$count     = Tools::backupFiles( $user , $directory , $dry_run );
-						$counts    = ( $count > 1 ) ? 's' : '';
-						$size      = Tools::dirSize( Tools::getFilesUserBackupDirectory( $user , $directory ) );
-						$humanSize = ( $size < 1000 ) ? '0B' : Tools::humanFilesize( $size );
-						$this->bag( '  <info>' . $count . '</info> file' . $counts . ' moved from user root directory (<info>' . $humanSize . '</info>)' );
+						// Backup data
+						if ( $prune_only === false )
+						{
+							$directory = Tools::ensureBackupDirectory( $user , $dry_run );
+							$this->bag( '  Backup in directory <info>' . $directory . '</info>' );
+
+							$count     = Tools::backupFiles( $user , $directory , $dry_run );
+							$counts    = ( $count > 1 ) ? 's' : '';
+							$size      = Tools::dirSize( Tools::getFilesUserBackupDirectory( $user , $directory ) );
+							$humanSize = ( $size < 1000 ) ? '0B' : Tools::humanFilesize( $size );
+							$this->bag( '  <info>' . $count . '</info> file' . $counts . ' moved from user root directory (<info>' . $humanSize . '</info>)' );
+						}
+
+						// Prune old backup
+						$count  = Tools::removeBackupFiles( $user , Tools::getFilesRetentionDays() , $dry_run );
+						$counts = ( $count > 1 ) ? 's' : '';
+						$this->bag( '  <info>' . $count . '</info> backup folder' . $counts . ' removed' );
 					}
 
-					// Prune old backup
-					$count  = Tools::removeBackupFiles( $user , Tools::getFilesRetentionDays() , $dry_run );
-					$counts = ( $count > 1 ) ? 's' : '';
-					$this->bag( '  <info>' . $count . '</info> backup folder' . $counts . ' removed' );
 				}
-
 			}
-		}
 
-		$this->info( 'Finished at ' . date( 'Y/m/d H:i:s' ) );
+			$this->info( 'Finished at ' . date( 'Y/m/d H:i:s' ) );
+
+		}
+		catch ( \Exception $fff )
+		{
+			$this->bag( '<error>' . $fff->getMessage() . '</error>' );
+		}
 
 		Tools::sendSlackMessage( $this->messages );
 	}
