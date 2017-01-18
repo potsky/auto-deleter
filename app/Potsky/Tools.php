@@ -116,10 +116,14 @@ class Tools
 
 	/**
 	 * @param $message
+	 *
+	 * @return bool
 	 */
 	public static function sendSlackMessage( $message )
 	{
 		$webhook = self::getSlackWebhook();
+
+		if ( empty( $message ) ) return false;
 
 		if ( ! empty( $webhook ) )
 		{
@@ -129,6 +133,8 @@ class Tools
 
 			$client->send( $message );
 		}
+
+		return true;
 	}
 
 	/**
@@ -151,7 +157,7 @@ class Tools
 	 */
 	public static function getFilesUsers()
 	{
-		chdir( self::getFilesUserHomeDirectory() );
+		self::goToUserHomeDirectory();
 
 		$users     = array();
 		$files     = glob( '*' );
@@ -276,7 +282,7 @@ class Tools
 	 */
 	public static function removeBackupFiles( $user , $days , $dry )
 	{
-		chdir( self::getFilesUserDirectory( $user ) );
+		self::goToUserDirectory( $user );
 
 		$count              = 0;
 		$backup_directories = glob( str_replace( '%DATE%' , '*' , self::getFilesBackupDirectoryModel() ) );
@@ -399,6 +405,29 @@ class Tools
 			return null;
 		}
 		// @codeCoverageIgnoreEnd
+	}
+
+	/**
+	 * @throws \Exception
+	 */
+	private static function goToUserHomeDirectory()
+	{
+		$dir = self::getFilesUserHomeDirectory();
+
+		if ( ! is_dir( $dir ) )
+		{
+			throw new \Exception( "Directory $dir does not exist" );
+		}
+
+		chdir( $dir );
+	}
+
+	/**
+	 * @param $user
+	 */
+	private static function goToUserDirectory( $user )
+	{
+		chdir( self::getFilesUserDirectory( $user ) );
 	}
 
 

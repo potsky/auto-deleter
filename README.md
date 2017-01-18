@@ -15,3 +15,6 @@
 2. Change the `.env` according to your settings
 3. Set this crontab on your server `* * * * * php /path/to/artisan schedule:run >> /dev/null 2>&1`
 
+## Slack
+
+Create a webhook at this address <https://my.slack.com/services/new/incoming-webhook>
